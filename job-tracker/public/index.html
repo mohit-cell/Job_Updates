@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Job Tracker</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="container">
+      <h1>Job Tracker</h1>
+      <div class="meta">
+        <span id="summary">—</span>
+        <button id="themeToggle" class="secondary">Light Mode</button>
+        <button id="exportBtn" class="secondary">Export CSV</button>
+      </div>
+    </header>
+
+    <section class="container controls">
+      <input id="search" type="search" placeholder="Search company or link..." />
+      <label class="checkbox">
+        <input id="onlyUnapplied" type="checkbox" /> Only show not applied
+      </label>
+      <div class="spacer"></div>
+      <span id="selectionCount">0 selected</span>
+      <button id="bulkApply" class="primary">Mark Applied</button>
+      <button id="bulkUnapply" class="secondary">Mark Unapplied</button>
+    </section>
+
+    <main class="container">
+      <div class="tableWrap">
+        <table id="jobsTable">
+          <thead>
+            <tr>
+              <th><input id="selectAll" type="checkbox" /></th>
+              <th>ID</th>
+              <th>Company</th>
+              <th>Link</th>
+              <th>Applied</th>
+              <th>Applied At</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="jobsBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyState" class="empty hidden">No jobs match your filter.</div>
+    </main>
+
+    <footer class="container small">
+      Built for your Jobs_List table. Changes save instantly.
+    </footer>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
