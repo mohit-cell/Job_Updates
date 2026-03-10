@@ -57,6 +57,7 @@ app.get('/api/health', async (req, res) => {
 app.get('/api/jobs', async (req, res) => {
   const search = (req.query.search || '').toString().trim();
   const onlyUnapplied = req.query.onlyUnapplied === 'true';
+  const orderBy = (req.query.orderBy || 'id_desc').toString();
 
   const params = [];
   const conditions = [];
@@ -69,10 +70,21 @@ app.get('/api/jobs', async (req, res) => {
   }
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
-  const sql = `SELECT id, company_name, job_link, applied, applied_at, notes
+  // Sanitize ORDER BY using a whitelist mapping
+  const orderMap = new Map([
+    ['posted_desc', 'posted_at DESC NULLS LAST'],
+    ['posted_asc', 'posted_at ASC NULLS LAST'],
+    ['id_desc', 'id DESC'],
+    ['id_asc', 'id ASC'],
+    ['applied_desc', 'applied_at DESC NULLS LAST'],
+    ['applied_asc', 'applied_at ASC NULLS LAST'],
+  ]);
+  const orderSql = orderMap.get(orderBy) || orderMap.get('id_desc');
+
+  const sql = `SELECT id, company_name, job_link, applied, applied_at, notes, posted_at
                FROM ${TABLE}
                ${where}
-               ORDER BY id DESC`;
+               ORDER BY ${orderSql}`;
   try {
     const { rows } = await pool.query(sql, params);
     res.json(rows);
@@ -145,6 +157,7 @@ app.post('/api/jobs/bulk/apply', async (req, res) => {
 app.get('/api/export', async (req, res) => {
   const search = (req.query.search || '').toString().trim();
   const onlyUnapplied = req.query.onlyUnapplied === 'true';
+  const orderBy = (req.query.orderBy || 'id_desc').toString();
   const params = [];
   const conditions = [];
   if (search) {
@@ -153,13 +166,22 @@ app.get('/api/export', async (req, res) => {
   }
   if (onlyUnapplied) conditions.push('applied = false');
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  const sql = `SELECT id, company_name, job_link, applied, applied_at, notes FROM ${TABLE} ${where} ORDER BY id DESC`;
+  const orderMap = new Map([
+    ['posted_desc', 'posted_at DESC NULLS LAST'],
+    ['posted_asc', 'posted_at ASC NULLS LAST'],
+    ['id_desc', 'id DESC'],
+    ['id_asc', 'id ASC'],
+    ['applied_desc', 'applied_at DESC NULLS LAST'],
+    ['applied_asc', 'applied_at ASC NULLS LAST'],
+  ]);
+  const orderSql = orderMap.get(orderBy) || orderMap.get('id_desc');
+  const sql = `SELECT id, company_name, job_link, applied, applied_at, notes, posted_at FROM ${TABLE} ${where} ORDER BY ${orderSql}`;
 
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="jobs_export.csv"');
   try {
     const { rows } = await pool.query(sql, params);
-    const stringifier = stringify({ header: true, columns: ['id','company_name','job_link','applied','applied_at','notes'] });
+    const stringifier = stringify({ header: true, columns: ['id','company_name','job_link','applied','applied_at','notes','posted_at'] });
     rows.forEach(r => stringifier.write(r));
     stringifier.pipe(res);
     stringifier.end();

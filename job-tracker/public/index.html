@@ -18,6 +18,12 @@
 
     <section class="container controls">
       <input id="search" type="search" placeholder="Search company or link..." />
+      <select id="orderBy">
+        <option value="posted_desc">Posted (newest)</option>
+        <option value="posted_asc">Posted (oldest)</option>
+        <option value="id_desc">ID (newest)</option>
+        <option value="id_asc">ID (oldest)</option>
+      </select>
       <label class="checkbox">
         <input id="onlyUnapplied" type="checkbox" /> Only show not applied
       </label>
@@ -39,6 +45,7 @@
               <th>Applied</th>
               <th>Applied At</th>
               <th>Notes</th>
+              <th>Date Posted</th>
               <th>Actions</th>
             </tr>
           </thead>

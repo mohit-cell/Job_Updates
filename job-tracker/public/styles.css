@@ -39,6 +39,7 @@ h1 { font-size: 20px; margin: 0; }
 .controls { display: flex; gap: 12px; align-items: center; }
 .controls .spacer { flex: 1; }
 input[type="search"] { width: 320px; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--row); color: var(--fg); }
+.controls select { padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--fg); }
 .checkbox { display: flex; gap: 6px; align-items: center; color: var(--muted); }
 
 .primary, .secondary, .small { cursor: pointer; }

@@ -10,6 +10,7 @@ const els = {
   summary: document.getElementById('summary'),
   exportBtn: document.getElementById('exportBtn'),
   themeToggle: document.getElementById('themeToggle'),
+  orderBy: document.getElementById('orderBy'),
   search: document.getElementById('search'),
   onlyUnapplied: document.getElementById('onlyUnapplied'),
   selectionCount: document.getElementById('selectionCount'),
@@ -25,6 +26,12 @@ function fmtDate(s) {
   if (!s) return '';
   const d = new Date(s);
   return d.toLocaleString();
+}
+
+function fmtDateOnly(s) {
+  if (!s) return '';
+  const d = new Date(s);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function showToast(msg, ok = true) {
@@ -73,6 +80,7 @@ function row(j) {
     <td>
       <textarea class="notes" rows="1" placeholder="Add notes...">${j.notes ?? ''}</textarea>
     </td>
+    <td class="nowrap">${fmtDateOnly(j.posted_at)}</td>
     <td class="actions">
       <button class="small copy">Copy Link</button>
       <a class="small" href="${j.job_link}" target="_blank" rel="noopener">Open</a>
@@ -93,6 +101,7 @@ async function fetchJobs() {
   const params = new URLSearchParams();
   if (state.search) params.set('search', state.search);
   if (state.onlyUnapplied) params.set('onlyUnapplied', 'true');
+  if (els.orderBy && els.orderBy.value) params.set('orderBy', els.orderBy.value);
   const res = await fetch(`/api/jobs?${params.toString()}`);
   if (!res.ok) throw new Error('Failed to load jobs');
   state.jobs = await res.json();
@@ -145,8 +154,15 @@ function attachHandlers() {
     const params = new URLSearchParams();
     if (state.search) params.set('search', state.search);
     if (state.onlyUnapplied) params.set('onlyUnapplied', 'true');
+    if (els.orderBy && els.orderBy.value) params.set('orderBy', els.orderBy.value);
     window.location.href = `/api/export?${params.toString()}`;
   });
+
+  if (els.orderBy) {
+    els.orderBy.addEventListener('change', () => {
+      fetchJobs().catch(e => showToast(e.message, false));
+    });
+  }
 
   els.bulkApply.addEventListener('click', async () => {
     if (state.selected.size === 0) return;
