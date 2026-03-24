@@ -8,7 +8,13 @@
   </head>
   <body>
     <header class="container">
-      <h1>Job Tracker</h1>
+      <div>
+        <h1>Application Workspace</h1>
+        <nav class="viewTabs" aria-label="Tracker views">
+          <button id="jobsTab" class="tabButton active" type="button">Job Tracker</button>
+          <button id="postsTab" class="tabButton" type="button">Post Tracker</button>
+        </nav>
+      </div>
       <div class="meta">
         <span id="summary">—</span>
         <button id="themeToggle" class="secondary">Light Mode</button>
@@ -16,47 +22,87 @@
       </div>
     </header>
 
-    <section class="container controls">
-      <input id="search" type="search" placeholder="Search company or link..." />
-      <select id="orderBy">
-        <option value="posted_desc">Posted (newest)</option>
-        <option value="posted_asc">Posted (oldest)</option>
-        <option value="id_desc">ID (newest)</option>
-        <option value="id_asc">ID (oldest)</option>
-      </select>
-      <label class="checkbox">
-        <input id="onlyUnapplied" type="checkbox" /> Only show not applied
-      </label>
-      <div class="spacer"></div>
-      <span id="selectionCount">0 selected</span>
-      <button id="bulkApply" class="primary">Mark Applied</button>
-      <button id="bulkUnapply" class="secondary">Mark Unapplied</button>
-    </section>
-
     <main class="container">
-      <div class="tableWrap">
-        <table id="jobsTable">
-          <thead>
-            <tr>
-              <th><input id="selectAll" type="checkbox" /></th>
-              <th>ID</th>
-              <th>Company</th>
-              <th>Link</th>
-              <th>Applied</th>
-              <th>Applied At</th>
-              <th>Notes</th>
-              <th>Date Posted</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="jobsBody"></tbody>
-        </table>
-      </div>
-      <div id="emptyState" class="empty hidden">No jobs match your filter.</div>
+      <section id="jobsView" class="trackerView">
+        <section class="controls">
+          <input id="search" type="search" placeholder="Search company or link..." />
+          <select id="orderBy">
+            <option value="posted_desc">Posted (newest)</option>
+            <option value="posted_asc">Posted (oldest)</option>
+            <option value="id_desc">ID (newest)</option>
+            <option value="id_asc">ID (oldest)</option>
+          </select>
+          <label class="checkbox">
+            <input id="onlyUnapplied" type="checkbox" /> Only show not applied
+          </label>
+          <div class="spacer"></div>
+          <span id="selectionCount">0 selected</span>
+          <button id="bulkApply" class="primary">Mark Applied</button>
+          <button id="bulkUnapply" class="secondary">Mark Unapplied</button>
+        </section>
+
+        <div class="tableWrap">
+          <table id="jobsTable">
+            <thead>
+              <tr>
+                <th><input id="selectAll" type="checkbox" /></th>
+                <th>ID</th>
+                <th>Company</th>
+                <th>Link</th>
+                <th>Applied</th>
+                <th>Applied At</th>
+                <th>Notes</th>
+                <th>Date Posted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="jobsBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty hidden">No jobs match your filter.</div>
+      </section>
+
+      <section id="postsView" class="trackerView hidden">
+        <section class="controls">
+          <input id="postSearch" type="search" placeholder="Search post ID or link..." />
+          <select id="postOrderBy">
+            <option value="posted_desc">Posted (newest)</option>
+            <option value="posted_asc">Posted (oldest)</option>
+            <option value="id_desc">ID (highest)</option>
+            <option value="id_asc">ID (lowest)</option>
+          </select>
+          <label class="fieldGroup">
+            <span>Posted from</span>
+            <input id="postDateFrom" type="date" />
+          </label>
+          <label class="fieldGroup">
+            <span>Posted to</span>
+            <input id="postDateTo" type="date" />
+          </label>
+          <label class="checkbox">
+            <input id="onlyWithLink" type="checkbox" checked /> Only rows with links
+          </label>
+        </section>
+
+        <div class="tableWrap">
+          <table id="postsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Post Link</th>
+                <th>Posted Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="postsBody"></tbody>
+          </table>
+        </div>
+        <div id="postsEmptyState" class="empty hidden">No posts match your filter.</div>
+      </section>
     </main>
 
     <footer class="container small">
-      Built for your Jobs_List table. Changes save instantly.
+      Built for your Jobs_List and Posts tables. Job changes save instantly.
     </footer>
 
     <div id="toast" class="toast hidden"></div>
