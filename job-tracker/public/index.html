@@ -32,9 +32,11 @@
             <option value="id_desc">ID (newest)</option>
             <option value="id_asc">ID (oldest)</option>
           </select>
-          <label class="checkbox">
-            <input id="onlyUnapplied" type="checkbox" /> Only show not applied
-          </label>
+          <select id="jobAppliedState">
+            <option value="all">All statuses</option>
+            <option value="applied">Applied</option>
+            <option value="not_applied">Not Applied</option>
+          </select>
           <div class="spacer"></div>
           <span id="selectionCount">0 selected</span>
           <button id="bulkApply" class="primary">Mark Applied</button>
@@ -48,11 +50,11 @@
                 <th><input id="selectAll" type="checkbox" /></th>
                 <th>ID</th>
                 <th>Company</th>
-                <th>Link</th>
                 <th>Applied</th>
+                <th>Link</th>
                 <th>Applied At</th>
-                <th>Notes</th>
                 <th>Date Posted</th>
+                <th>Notes</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -70,6 +72,11 @@
             <option value="posted_asc">Posted (oldest)</option>
             <option value="id_desc">ID (highest)</option>
             <option value="id_asc">ID (lowest)</option>
+          </select>
+          <select id="postAppliedState">
+            <option value="all">All statuses</option>
+            <option value="applied">Applied</option>
+            <option value="not_applied">Not Applied</option>
           </select>
           <label class="fieldGroup">
             <span>Posted from</span>
@@ -91,6 +98,7 @@
                 <th>ID</th>
                 <th>Post Link</th>
                 <th>Posted Date</th>
+                <th>Applied</th>
                 <th>Actions</th>
               </tr>
             </thead>

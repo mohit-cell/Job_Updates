@@ -4,13 +4,14 @@ const state = {
   filtered: [],
   selected: new Set(),
   search: '',
-  onlyUnapplied: false,
+  jobAppliedState: 'all',
   posts: [],
   postFiltered: [],
   postSearch: '',
   postDateFrom: '',
   postDateTo: '',
   onlyWithLink: true,
+  postAppliedState: 'all',
 };
 
 const els = {
@@ -22,8 +23,8 @@ const els = {
   jobsView: document.getElementById('jobsView'),
   postsView: document.getElementById('postsView'),
   orderBy: document.getElementById('orderBy'),
+  jobAppliedState: document.getElementById('jobAppliedState'),
   search: document.getElementById('search'),
-  onlyUnapplied: document.getElementById('onlyUnapplied'),
   selectionCount: document.getElementById('selectionCount'),
   bulkApply: document.getElementById('bulkApply'),
   bulkUnapply: document.getElementById('bulkUnapply'),
@@ -32,6 +33,7 @@ const els = {
   empty: document.getElementById('emptyState'),
   postSearch: document.getElementById('postSearch'),
   postOrderBy: document.getElementById('postOrderBy'),
+  postAppliedState: document.getElementById('postAppliedState'),
   postDateFrom: document.getElementById('postDateFrom'),
   postDateTo: document.getElementById('postDateTo'),
   onlyWithLink: document.getElementById('onlyWithLink'),
@@ -62,8 +64,8 @@ function showToast(msg, ok = true) {
 function renderSummary() {
   if (state.activeView === 'posts') {
     const total = state.posts.length;
-    const withDate = state.posts.filter((post) => post.posted_date).length;
-    els.summary.textContent = `${withDate} with posted dates / ${total} total posts`;
+    const applied = state.posts.filter((post) => post.applied).length;
+    els.summary.textContent = `${applied} applied / ${total} total posts`;
     return;
   }
 
@@ -84,18 +86,18 @@ function row(job) {
     <td><input type="checkbox" class="rowSelect" ${state.selected.has(job.id) ? 'checked' : ''}></td>
     <td class="mono">${job.id}</td>
     <td>${job.company_name ?? ''}</td>
-    <td><a href="${job.job_link}" target="_blank" rel="noopener">${job.job_link}</a></td>
     <td class="center">
       <label class="switch">
         <input type="checkbox" class="applyToggle" ${job.applied ? 'checked' : ''}>
         <span class="slider"></span>
       </label>
     </td>
+    <td class="linkCell"><a href="${job.job_link}" target="_blank" rel="noopener">${job.job_link}</a></td>
     <td class="nowrap">${fmtDate(job.applied_at)}</td>
+    <td class="nowrap">${fmtDateOnly(job.posted_at)}</td>
     <td>
       <textarea class="notes" rows="1" placeholder="Add notes...">${job.notes ?? ''}</textarea>
     </td>
-    <td class="nowrap">${fmtDateOnly(job.posted_at)}</td>
     <td class="actions">
       <button class="small copy">Copy Link</button>
       <a class="small" href="${job.job_link}" target="_blank" rel="noopener">Open</a>
@@ -112,6 +114,12 @@ function postRow(post) {
     <td class="mono">${post.id ?? ''}</td>
     <td class="linkCell">${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener">${safeLink}</a>` : '<span class="muted">No link</span>'}</td>
     <td class="nowrap">${fmtDate(post.posted_date)}</td>
+    <td class="center">
+      <label class="switch">
+        <input type="checkbox" class="postApplyToggle" ${post.applied ? 'checked' : ''}>
+        <span class="slider"></span>
+      </label>
+    </td>
     <td class="actions">
       <button class="small copyPost" ${safeLink ? '' : 'disabled'}>Copy Link</button>
       ${safeLink ? `<a class="small" href="${safeLink}" target="_blank" rel="noopener">Open</a>` : ''}
@@ -139,8 +147,11 @@ function applyFilters() {
   const q = state.search.toLowerCase();
   state.filtered = state.jobs.filter((job) => {
     const matches = !q || job.company_name?.toLowerCase().includes(q) || job.job_link?.toLowerCase().includes(q);
-    const pass = state.onlyUnapplied ? !job.applied : true;
-    return matches && pass;
+    const matchesApplied =
+      state.jobAppliedState === 'all' ||
+      (state.jobAppliedState === 'applied' && job.applied) ||
+      (state.jobAppliedState === 'not_applied' && !job.applied);
+    return matches && matchesApplied;
   });
   render();
 }
@@ -156,7 +167,11 @@ function applyPostFilters() {
     const matchesLink = !state.onlyWithLink || Boolean(post.post_link?.trim());
     const matchesStart = !start || (posted && posted >= start);
     const matchesEnd = !end || (posted && posted <= end);
-    return matchesSearch && matchesLink && matchesStart && matchesEnd;
+    const matchesApplied =
+      state.postAppliedState === 'all' ||
+      (state.postAppliedState === 'applied' && post.applied) ||
+      (state.postAppliedState === 'not_applied' && !post.applied);
+    return matchesSearch && matchesLink && matchesStart && matchesEnd && matchesApplied;
   });
 
   renderPosts();
@@ -165,7 +180,7 @@ function applyPostFilters() {
 async function fetchJobs() {
   const params = new URLSearchParams();
   if (state.search) params.set('search', state.search);
-  if (state.onlyUnapplied) params.set('onlyUnapplied', 'true');
+  if (state.jobAppliedState !== 'all') params.set('appliedState', state.jobAppliedState);
   if (els.orderBy.value) params.set('orderBy', els.orderBy.value);
   const res = await fetch(`/api/jobs?${params.toString()}`);
   if (!res.ok) throw new Error('Failed to load jobs');
@@ -179,10 +194,24 @@ async function fetchPosts() {
   if (state.postDateFrom) params.set('postedFrom', state.postDateFrom);
   if (state.postDateTo) params.set('postedTo', state.postDateTo);
   if (state.onlyWithLink) params.set('onlyWithLink', 'true');
+  if (state.postAppliedState !== 'all') params.set('appliedState', state.postAppliedState);
   if (els.postOrderBy.value) params.set('orderBy', els.postOrderBy.value);
   const res = await fetch(`/api/posts?${params.toString()}`);
   if (!res.ok) throw new Error('Failed to load posts');
   state.posts = await res.json();
+  applyPostFilters();
+}
+
+async function togglePostApplied(id, applied) {
+  const res = await fetch(`/api/posts/${id}/apply`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ applied }),
+  });
+  if (!res.ok) throw new Error('Failed to update post');
+  const updated = await res.json();
+  const idx = state.posts.findIndex((post) => post.id === id);
+  if (idx !== -1) state.posts[idx] = updated;
   applyPostFilters();
 }
 
@@ -205,7 +234,7 @@ async function toggleApplied(id, applied) {
   });
   if (!res.ok) throw new Error('Failed to update');
   const updated = await res.json();
-  const idx = state.jobs.findIndex((job) => job.id === id);
+  const idx = state.jobs.findIndex((job) => String(job.id) === String(id));
   if (idx !== -1) state.jobs[idx] = updated;
   applyFilters();
 }
@@ -246,13 +275,17 @@ function attachHandlers() {
     state.search = e.target.value;
     applyFilters();
   });
-  els.onlyUnapplied.addEventListener('change', (e) => {
-    state.onlyUnapplied = e.target.checked;
+  els.jobAppliedState.addEventListener('change', (e) => {
+    state.jobAppliedState = e.target.value;
     applyFilters();
   });
 
   els.postSearch.addEventListener('input', (e) => {
     state.postSearch = e.target.value;
+    applyPostFilters();
+  });
+  els.postAppliedState.addEventListener('change', (e) => {
+    state.postAppliedState = e.target.value;
     applyPostFilters();
   });
   els.postDateFrom.addEventListener('change', (e) => {
@@ -271,7 +304,7 @@ function attachHandlers() {
   els.exportBtn.addEventListener('click', () => {
     const params = new URLSearchParams();
     if (state.search) params.set('search', state.search);
-    if (state.onlyUnapplied) params.set('onlyUnapplied', 'true');
+    if (state.jobAppliedState !== 'all') params.set('appliedState', state.jobAppliedState);
     if (els.orderBy.value) params.set('orderBy', els.orderBy.value);
     window.location.href = `/api/export?${params.toString()}`;
   });
@@ -319,7 +352,7 @@ function attachHandlers() {
   els.tbody.addEventListener('change', async (e) => {
     const tr = e.target.closest('tr');
     if (!tr) return;
-    const id = Number(tr.dataset.id);
+    const id = tr.dataset.id;
 
     if (e.target.classList.contains('applyToggle')) {
       try {
@@ -342,7 +375,7 @@ function attachHandlers() {
   els.tbody.addEventListener('input', (e) => {
     if (!e.target.classList.contains('notes')) return;
     const tr = e.target.closest('tr');
-    const id = Number(tr.dataset.id);
+    const id = tr.dataset.id;
     clearTimeout(noteTimers.get(id));
     noteTimers.set(id, setTimeout(async () => {
       try {
@@ -357,7 +390,7 @@ function attachHandlers() {
   els.tbody.addEventListener('blur', (e) => {
     if (!e.target.classList.contains('notes')) return;
     const tr = e.target.closest('tr');
-    const id = Number(tr.dataset.id);
+    const id = tr.dataset.id;
     (async () => {
       try {
         await updateNotes(id, e.target.value);
@@ -371,8 +404,8 @@ function attachHandlers() {
   els.tbody.addEventListener('click', async (e) => {
     if (!e.target.classList.contains('copy')) return;
     const tr = e.target.closest('tr');
-    const id = Number(tr.dataset.id);
-    const job = state.jobs.find((item) => item.id === id);
+    const id = tr.dataset.id;
+    const job = state.jobs.find((item) => String(item.id) === id);
     try {
       await navigator.clipboard.writeText(job.job_link);
       showToast('Copied');
@@ -384,14 +417,28 @@ function attachHandlers() {
   els.postsBody.addEventListener('click', async (e) => {
     if (!e.target.classList.contains('copyPost')) return;
     const tr = e.target.closest('tr');
-    const id = Number(tr.dataset.id);
-    const post = state.posts.find((item) => item.id === id);
+    const id = tr.dataset.id;
+    const post = state.posts.find((item) => String(item.id) === id);
     if (!post?.post_link) return;
     try {
       await navigator.clipboard.writeText(post.post_link);
       showToast('Copied');
     } catch {
       showToast('Copy failed', false);
+    }
+  });
+
+  els.postsBody.addEventListener('change', async (e) => {
+    const tr = e.target.closest('tr');
+    if (!tr) return;
+    if (!e.target.classList.contains('postApplyToggle')) return;
+    const id = tr.dataset.id;
+    try {
+      await togglePostApplied(id, e.target.checked);
+      showToast('Saved');
+    } catch (err) {
+      showToast(err.message, false);
+      e.target.checked = !e.target.checked;
     }
   });
 

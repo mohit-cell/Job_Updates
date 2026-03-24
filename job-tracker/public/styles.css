@@ -161,13 +161,24 @@ button:disabled {
 .tableWrap {
   border: 1px solid var(--border);
   border-radius: 8px;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   background: var(--card);
+  padding-bottom: 4px;
 }
 
 table {
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   border-collapse: collapse;
+}
+
+#jobsTable {
+  min-width: 1350px;
+}
+
+#postsTable {
+  min-width: 850px;
 }
 
 th, td {
@@ -194,6 +205,31 @@ tbody tr:nth-child(even) {
 .muted { color: var(--muted); }
 .actions { white-space: nowrap; }
 .linkCell a { word-break: break-all; }
+.linkCell {
+  min-width: 420px;
+  max-width: 620px;
+}
+
+.tableWrap::-webkit-scrollbar {
+  height: 12px;
+}
+
+.tableWrap::-webkit-scrollbar-track {
+  background: color-mix(in srgb, var(--row) 78%, white 22%);
+  border-radius: 999px;
+}
+
+.tableWrap::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 62%, var(--card) 38%);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tableWrap {
+  scrollbar-color: color-mix(in srgb, var(--accent) 62%, var(--card) 38%) color-mix(in srgb, var(--row) 78%, white 22%);
+  scrollbar-width: auto;
+}
 
 textarea.notes {
   width: 100%;
